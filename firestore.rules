@@ -1,0 +1,16 @@
+rules_version = '2';
+// Só os e-mails desta lista leem e gravam. Para liberar alguém, inclua o e-mail e publique as regras de novo.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function liberado() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+          'EMAIL_DO_MARCOS',
+          'andersonrodriguesdonascimento@gmail.com'
+        ];
+    }
+    match /clientes/{id} { allow read, write: if liberado(); }
+    match /demandas/{id} { allow read, write: if liberado(); }
+  }
+}

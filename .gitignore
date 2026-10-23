@@ -1,0 +1,3 @@
+# dados de cliente nunca vão para o repositório
+importar-*.json
+*.xlsx

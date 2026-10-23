@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Carteira PJ Agrotec</title>
+<meta name="theme-color" content="#2f6b3f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Carteira PJ">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho fixo com abas, faixa de contagens, lista em fichas compactas; painel lateral/inferior para editar */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --fg:#1b241d; --muted:#5f6b62; --line:#dde3dc;
+  --accent:#2f6b3f; --accent-soft:#e4efe6; --accent-fg:#ffffff;
+  --run:#1f5fa8; --run-soft:#e3edf9; --todo:#6b5d1f; --todo-soft:#f4efd9;
+  --block:#a33a2b; --block-soft:#f8e4e0; --done:#5f6b62; --done-soft:#eceeeb;
+  --font-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --font-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121713; --surface:#1a211c; --fg:#e6ece6; --muted:#9aa79d; --line:#2c362f;
+  --accent:#6fbf83; --accent-soft:#1f3326; --accent-fg:#0d1a10;
+  --run:#7fb1ee; --run-soft:#1a2a3d; --todo:#d9c26a; --todo-soft:#2d2a17;
+  --block:#ef8f80; --block-soft:#3a1f1b; --done:#9aa79d; --done-soft:#232a25; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121713; --surface:#1a211c; --fg:#e6ece6; --muted:#9aa79d; --line:#2c362f;
+  --accent:#6fbf83; --accent-soft:#1f3326; --accent-fg:#0d1a10;
+  --run:#7fb1ee; --run-soft:#1a2a3d; --todo:#d9c26a; --todo-soft:#2d2a17;
+  --block:#ef8f80; --block-soft:#3a1f1b; --done:#9aa79d; --done-soft:#232a25; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding-block:12px 0;flex-wrap:wrap}
+.brand{font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:.01em;margin:0;flex:1;min-width:0}
+.brand small{font-weight:500;color:var(--muted);font-size:14px;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}
+.tabs{display:flex;gap:4px;padding-block:8px 0}
+.tab{font:600 15px var(--font-display);letter-spacing:.04em;text-transform:uppercase;background:none;border:0;color:var(--muted);padding:8px 12px 10px;border-bottom:3px solid transparent;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+button{font-family:inherit}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--block);border:1px solid var(--block)}
+.btn:focus-visible,.tab:focus-visible,.chip:focus-visible,.card:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-block:16px 48px;display:flex;flex-direction:column;gap:14px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left;color:var(--fg)}
+.stat b{display:block;font:700 24px var(--font-display);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.stat.alert b{color:var(--block)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--fg);font-weight:600}
+.search{flex:1 1 180px;min-width:0;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 10px;font-size:14px}
+.sep{width:1px;height:22px;background:var(--line)}
+h2.group{font:600 13px var(--font-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 0;display:flex;gap:8px;align-items:center}
+h2.group .n{font-variant-numeric:tabular-nums}
+.list{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;cursor:pointer;color:var(--fg);text-align:left;width:100%}
+.card .cli{font:600 13px var(--font-display);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.card .task{font-weight:600;min-width:0}
+.card .obs{color:var(--muted);font-size:14px;grid-column:1/-1;min-width:0;overflow-wrap:anywhere}
+.card .meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.meta .late{color:var(--block);font-weight:600}
+.meta .soon{color:var(--todo);font-weight:600}
+.meta .stale{color:var(--block)}
+.pill{font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap;align-self:start}
+.s-run{background:var(--run-soft);color:var(--run)} .s-todo{background:var(--todo-soft);color:var(--todo)}
+.s-block{background:var(--block-soft);color:var(--block)} .s-done{background:var(--done-soft);color:var(--done)}
+.ccard{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 12px;align-items:center}
+.prio{font:700 20px var(--font-display);color:var(--muted);width:28px;text-align:center;font-variant-numeric:tabular-nums}
+.ccard .name{font-weight:600}
+.ccard .sub{font-size:13px;color:var(--muted);grid-column:2/3;min-width:0}
+.ccard .open{font:600 13px var(--font-display);text-align:right;color:var(--muted);grid-row:1/3;grid-column:3}
+.ccard .open b{display:block;font-size:20px;color:var(--fg)}
+.note{font-size:13px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:10px 12px}
+.empty{text-align:center;color:var(--muted);padding:32px 12px;background:var(--surface);border:1px dashed var(--line);border-radius:10px}
+.banner{background:var(--block-soft);color:var(--block);border-radius:10px;padding:10px 12px;font-size:14px}
+/* painel de edição */
+.overlay{position:fixed;inset:0;background:rgba(10,15,11,.45);z-index:20;display:flex;justify-content:flex-end}
+.panel{background:var(--surface);color:var(--fg);width:min(480px,100%);height:100%;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 18px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font:700 20px var(--font-display);margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.x{background:none;border:0;font-size:26px;line-height:1;color:var(--muted);cursor:pointer;padding:4px 8px}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+label input,label select,label textarea{font:400 15px var(--font-body);text-transform:none;letter-spacing:0;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+textarea{min-height:84px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.actions .spacer{flex:1}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--block)}
+.sub-h{font:600 13px var(--font-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:8px 0 0;display:flex;justify-content:space-between;align-items:center}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30}
+.login{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.login h2{font:700 28px var(--font-display);margin:0}
+.login p{color:var(--muted);margin:0;max-width:34ch}
+.who{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);padding-block:0 4px;flex-wrap:wrap}
+.who button{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:2px 4px;font-size:12.5px}
+@media (max-width:560px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sep{display:none}
+  .overlay{align-items:flex-end}
+  .panel{height:92%;border-radius:14px 14px 0 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:16px}
+  .row2{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){.card,.stat,.chip{transition:border-color .15s,background .15s}.card:hover,.stat:hover{border-color:var(--accent)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <h1 class="brand">Carteira PJ <small>Agrotec</small></h1>
+      <button class="btn" id="btnNew" type="button" hidden>+ Nova demanda</button>
+    </div>
+    <div class="tabs" role="tablist" hidden>
+      <button class="tab" role="tab" id="tabDem" aria-selected="true" type="button">Demandas</button>
+      <button class="tab" role="tab" id="tabCli" aria-selected="false" type="button">Clientes</button>
+    </div>
+    <div class="who" id="who" hidden><span id="whoMail"></span><button type="button" id="btnSair">Sair</button></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner" class="banner" hidden></div>
+  <section id="viewLogin" class="login" hidden>
+    <h2>Carteira PJ</h2>
+    <p>Entre com a sua conta Google para ver e atualizar as demandas.</p>
+    <button class="btn" id="btnEntrar" type="button">Entrar com Google</button>
+  </section>
+
+  <section id="viewDem" class="list" style="gap:14px" hidden>
+    <div class="stats" id="stats"></div>
+    <div class="filters">
+      <button class="chip" data-st="abertas" aria-pressed="true" type="button">Abertas</button>
+      <button class="chip" data-st="concluidas" aria-pressed="false" type="button">Concluídas</button>
+      <button class="chip" data-st="todas" aria-pressed="false" type="button">Todas</button>
+      <span class="sep"></span>
+      <button class="chip" data-resp="" aria-pressed="true" type="button">Todos</button>
+      <button class="chip" data-resp="Marcos Carrera" aria-pressed="false" type="button">Marcos</button>
+      <button class="chip" data-resp="Anderson Nascimento" aria-pressed="false" type="button">Anderson</button>
+      <input class="search" id="q" type="search" placeholder="Buscar cliente, tarefa ou observação">
+    </div>
+    <div id="demList" class="list"><div class="empty">Carregando demandas…</div></div>
+  </section>
+
+  <section id="viewCli" class="list" hidden>
+    <div class="filters">
+      <input class="search" id="qc" type="search" placeholder="Buscar cliente, contato ou gerente">
+      <button class="btn ghost" id="btnNewCli" type="button">+ Novo cliente</button>
+    </div>
+    <div class="note" id="importBox" hidden>Base vazia. Para trazer os dados da planilha, escolha o arquivo <b>importar-carteira-pj.json</b>:
+      <input type="file" id="importFile" accept=".json,application/json" style="display:block;margin-top:8px"></div>
+    <div id="cliList" class="list"><div class="empty">Carregando clientes…</div></div>
+  </section>
+</main>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="panel" id="panel" role="dialog" aria-modal="true"></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, setDoc, addDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const fs = initializeFirestore(fbApp, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+const STATUS = ["Não iniciada","Em execução","Bloqueada","Concluída"];
+const ST_CLASS = {"Não iniciada":"s-todo","Em execução":"s-run","Bloqueada":"s-block","Concluída":"s-done"};
+const GROUP_ORDER = ["Em execução","Não iniciada","Bloqueada","Concluída"];
+const RESP = ["Marcos Carrera","Anderson Nascimento","Ambos"];
+const state = {db:null, clientes:[], demandas:[], tab:"dem", st:"abertas", resp:"", q:"", qc:"", loaded:{c:false,d:false}, readonly:false};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayISO = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
+const fmt = iso => iso ? iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(2,4) : "";
+const days = iso => Math.round((new Date(iso+"T00:00:00") - new Date(todayISO()+"T00:00:00"))/864e5);
+const cliById = id => state.clientes.find(c => c.id===id);
+const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2200); }
+function banner(msg){ const b=$("#banner"); b.textContent=msg; b.hidden=!msg; }
+
+/* ---------- render: demandas ---------- */
+function respMatch(d){ return !state.resp || d.responsavel===state.resp || d.responsavel==="Ambos"; }
+function renderStats(){
+  const open = state.demandas.filter(d=>d.status!=="Concluída" && respMatch(d));
+  const late = open.filter(d=>d.prazo && days(d.prazo)<0).length;
+  const week = open.filter(d=>d.prazo && days(d.prazo)>=0 && days(d.prazo)<=7).length;
+  $("#stats").innerHTML = [
+    ["Em aberto", open.length, ""],
+    ["Em execução", open.filter(d=>d.status==="Em execução").length, ""],
+    ["Próx. 7 dias", week, ""],
+    ["Atrasadas", late, late?"alert":""]
+  ].map(([l,n,c])=>`<div class="stat ${c}"><b>${n}</b><span>${l}</span></div>`).join("");
+}
+function demCard(d){
+  const c = cliById(d.clienteId);
+  const meta = [];
+  meta.push(esc(d.responsavel||"Sem responsável"));
+  if (d.prazo && d.status!=="Concluída"){
+    const n=days(d.prazo);
+    meta.push(n<0?`<span class="late">Atrasada ${-n}d · ${fmt(d.prazo)}</span>`:n<=7?`<span class="soon">Prazo ${n===0?"hoje":"em "+n+"d"} · ${fmt(d.prazo)}</span>`:`Prazo ${fmt(d.prazo)}`);
+  } else if (d.prazo) meta.push(`Prazo ${fmt(d.prazo)}`);
+  if (d.atualizado){ const n=-days(d.atualizado); meta.push(`<span class="${n>30&&d.status!=="Concluída"?"stale":""}">Atualizada ${fmt(d.atualizado)}${n>0?" ("+n+"d)":""}</span>`); }
+  return `<button class="card" type="button" data-dem="${esc(d.id)}">
+    <div style="min-width:0"><div class="cli">${esc(c?c.nome:"Cliente removido")}</div><div class="task">${esc(d.tarefa||"(sem título)")}</div></div>
+    <span class="pill ${ST_CLASS[d.status]||"s-todo"}">${esc(d.status||"Não iniciada")}</span>
+    ${d.obs?`<div class="obs">${esc(d.obs)}</div>`:""}
+    <div class="meta">${meta.join("<span aria-hidden='true'>·</span>")}</div>
+  </button>`;
+}
+function sortDem(a,b){
+  const pa=a.prazo||"9999", pb=b.prazo||"9999";
+  if (pa!==pb) return pa<pb?-1:1;
+  const ca=cliById(a.clienteId)?.prioridade??99, cb=cliById(b.clienteId)?.prioridade??99;
+  return ca-cb;
+}
+function renderDem(){
+  renderStats();
+  const el=$("#demList");
+  if (!state.loaded.d){ return; }
+  let list = state.demandas.filter(respMatch);
+  if (state.st==="abertas") list=list.filter(d=>d.status!=="Concluída");
+  if (state.st==="concluidas") list=list.filter(d=>d.status==="Concluída");
+  if (state.q){ const q=norm(state.q); list=list.filter(d=>norm([cliById(d.clienteId)?.nome,d.tarefa,d.obs].join(" ")).includes(q)); }
+  if (!state.demandas.length){ el.innerHTML=`<div class="empty">Nenhuma demanda ainda.<br>Toque em <b>+ Nova demanda</b> para lançar a primeira.</div>`; return; }
+  if (!list.length){ el.innerHTML=`<div class="empty">Nada com esses filtros.</div>`; return; }
+  const late = list.filter(d=>d.status!=="Concluída" && d.prazo && days(d.prazo)<0).sort(sortDem);
+  const rest = list.filter(d=>!late.includes(d));
+  let html="";
+  if (late.length) html+=`<h2 class="group" style="color:var(--block)">Atrasadas <span class="n">${late.length}</span></h2>`+late.map(demCard).join("");
+  for (const g of GROUP_ORDER){
+    const items=rest.filter(d=>(d.status||"Não iniciada")===g).sort(g==="Concluída"?(a,b)=>(b.atualizado||"").localeCompare(a.atualizado||""):sortDem);
+    if (items.length) html+=`<h2 class="group">${g} <span class="n">${items.length}</span></h2>`+items.map(demCard).join("");
+  }
+  el.innerHTML=html;
+}
+
+/* ---------- render: clientes ---------- */
+function renderCli(){
+  const el=$("#cliList");
+  if (!state.loaded.c) return;
+  let list=[...state.clientes].sort((a,b)=>(a.prioridade??99)-(b.prioridade??99)||a.nome.localeCompare(b.nome));
+  if (state.qc){ const q=norm(state.qc); list=list.filter(c=>norm([c.nome,c.contato,c.gerente,c.municipio,c.cnpj].join(" ")).includes(q)); }
+  if (!state.clientes.length){ el.innerHTML=`<div class="empty">Nenhum cliente ainda.<br>Toque em <b>+ Novo cliente</b>.</div>`; return; }
+  if (!list.length){ el.innerHTML=`<div class="empty">Nenhum cliente encontrado.</div>`; return; }
+  el.innerHTML=list.map(c=>{
+    const ds=state.demandas.filter(d=>d.clienteId===c.id);
+    const open=ds.filter(d=>d.status!=="Concluída").length;
+    const sub=[c.contato,c.municipio,c.gerente&&("Gerente: "+c.gerente)].filter(Boolean).map(esc).join(" · ");
+    return `<button class="card ccard" type="button" data-cli="${esc(c.id)}">
+      <span class="prio" style="grid-row:1/3">${c.prioridade??"–"}</span>
+      <span class="name">${esc(c.nome)}</span>
+      <span class="open"><b>${open}</b>aberta${open===1?"":"s"}</span>
+      <span class="sub">${sub||"Sem contato cadastrado"}</span>
+    </button>`;
+  }).join("");
+}
+function render(){ state.tab==="dem"?renderDem():renderCli(); }
+
+/* ---------- painel ---------- */
+function openPanel(html){ $("#panel").innerHTML=html; $("#overlay").hidden=false; const f=$("#panel").querySelector("input,select,textarea"); if (f && window.innerWidth>560) f.focus(); }
+function closePanel(){ $("#overlay").hidden=true; $("#panel").innerHTML=""; }
+$("#overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") closePanel(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("#overlay").hidden) closePanel(); });
+
+function opts(arr,val){ return arr.map(v=>`<option${v===val?" selected":""}>${esc(v)}</option>`).join(""); }
+function cliOpts(val){ return [...state.clientes].sort((a,b)=>a.nome.localeCompare(b.nome)).map(c=>`<option value="${esc(c.id)}"${c.id===val?" selected":""}>${esc(c.nome)}</option>`).join(""); }
+
+function editDem(id, presetCli){
+  const d = id ? state.demandas.find(x=>x.id===id) : {clienteId:presetCli||"", status:"Não iniciada", responsavel:"Marcos Carrera"};
+  if (!d) return;
+  if (!state.clientes.length){ toast("Cadastre um cliente primeiro"); return; }
+  openPanel(`<h3>${id?"Editar demanda":"Nova demanda"}<button class="x" type="button" data-close aria-label="Fechar">×</button></h3>
+    <form id="fDem" class="list" style="gap:12px">
+      <label>Cliente<select id="fd_cli" required>${presetCli||id?"":"<option value=''>Escolha…</option>"}${cliOpts(d.clienteId)}</select></label>
+      <label>Tarefa<input id="fd_task" required value="${esc(d.tarefa)}" placeholder="Ex.: Pedir laudo ABIMAQ"></label>
+      <div class="row2">
+        <label>Status<select id="fd_st">${opts(STATUS,d.status)}</select></label>
+        <label>Responsável<select id="fd_resp">${opts(RESP,d.responsavel)}</select></label>
+      </div>
+      <label>Prazo / próximo contato<input id="fd_prazo" type="date" value="${esc(d.prazo||"")}"></label>
+      <label>Observações<textarea id="fd_obs" placeholder="O que foi feito, com quem falou, o que falta">${esc(d.obs)}</textarea></label>
+      ${d.atualizado?`<div class="note">Última atualização: ${fmt(d.atualizado)}</div>`:""}
+      <div class="actions">
+        <button class="btn" type="submit">Salvar</button>
+        <button class="btn ghost" type="button" data-close>Cancelar</button>
+        <span class="spacer"></span>
+        ${id?`<button class="btn danger" type="button" id="delDem">Excluir</button>`:""}
+      </div>
+      <div id="confDem" class="confirm" hidden>Excluir esta demanda de vez?
+        <button class="btn danger" type="button" id="delDemYes">Sim, excluir</button>
+        <button class="btn ghost" type="button" id="delDemNo">Não</button></div>
+    </form>`);
+  $("#fDem").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const body={clienteId:$("#fd_cli").value, tarefa:$("#fd_task").value.trim(), status:$("#fd_st").value,
+      responsavel:$("#fd_resp").value, prazo:$("#fd_prazo").value||"", obs:$("#fd_obs").value.trim(), atualizado:todayISO()};
+    if (!body.clienteId){ toast("Escolha o cliente"); return; }
+    await save("demandas", id, body, "Demanda salva");
+  });
+  if (id){
+    $("#delDem").onclick=()=>{ $("#confDem").hidden=false; };
+    $("#delDemNo").onclick=()=>{ $("#confDem").hidden=true; };
+    $("#delDemYes").onclick=()=>remove("demandas", id, "Demanda excluída");
+  }
+}
+
+function editCli(id){
+  const c = id ? cliById(id) : {prioridade: (Math.max(0,...state.clientes.map(x=>x.prioridade||0))+1)};
+  if (!c) return;
+  const ds = id ? state.demandas.filter(d=>d.clienteId===id).sort((a,b)=>(a.status==="Concluída")-(b.status==="Concluída")||sortDem(a,b)) : [];
+  openPanel(`<h3>${id?esc(c.nome):"Novo cliente"}<button class="x" type="button" data-close aria-label="Fechar">×</button></h3>
+    ${id?`<div class="sub-h">Demandas <button class="btn ghost" type="button" id="cliAddDem">+ Demanda</button></div>
+      <div class="list">${ds.length?ds.map(demCard).join(""):`<div class="empty" style="padding:16px">Sem demandas.</div>`}</div>
+      <div class="sub-h">Dados do cliente</div>`:""}
+    <form id="fCli" class="list" style="gap:12px">
+      <label>Nome<input id="fc_nome" required value="${esc(c.nome)}"></label>
+      <div class="row2">
+        <label>CNPJ<input id="fc_cnpj" inputmode="numeric" value="${esc(c.cnpj)}" placeholder="00.000.000/0000-00"></label>
+        <label>Prioridade<input id="fc_prio" type="number" min="1" value="${esc(c.prioridade)}"></label>
+      </div>
+      <div class="row2">
+        <label>Proprietário / contato<input id="fc_cont" value="${esc(c.contato)}"></label>
+        <label>Município/UF<input id="fc_mun" value="${esc(c.municipio)}"></label>
+      </div>
+      <label>Gerente no banco<input id="fc_ger" value="${esc(c.gerente)}" placeholder="Nome - agência"></label>
+      <label>Limite, garantias e notas<textarea id="fc_notas" placeholder="Limite BASA (automático, global, investimento, máquinas), garantias exigidas, perfil do negócio">${esc(c.notas)}</textarea></label>
+      <div class="actions">
+        <button class="btn" type="submit">Salvar cliente</button>
+        <button class="btn ghost" type="button" data-close>Fechar</button>
+        <span class="spacer"></span>
+        ${id?`<button class="btn danger" type="button" id="delCli">Excluir</button>`:""}
+      </div>
+      <div id="confCli" class="confirm" hidden></div>
+    </form>`);
+  $("#fCli").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const p=parseInt($("#fc_prio").value,10);
+    const body={nome:$("#fc_nome").value.trim().toUpperCase(), cnpj:$("#fc_cnpj").value.trim(), prioridade:isNaN(p)?99:p,
+      contato:$("#fc_cont").value.trim(), municipio:$("#fc_mun").value.trim(), gerente:$("#fc_ger").value.trim(), notas:$("#fc_notas").value.trim()};
+    await save("clientes", id, body, "Cliente salvo");
+  });
+  if (id){
+    $("#cliAddDem").onclick=()=>editDem(null,id);
+    $("#panel").querySelectorAll("[data-dem]").forEach(b=>b.onclick=()=>editDem(b.dataset.dem));
+    $("#delCli").onclick=()=>{
+      const cf=$("#confCli"); cf.hidden=false;
+      if (ds.length){ cf.textContent=`Este cliente tem ${ds.length} demanda(s). Exclua as demandas antes.`; return; }
+      cf.innerHTML=`Excluir o cliente de vez? <button class="btn danger" type="button" id="delCliYes">Sim, excluir</button><button class="btn ghost" type="button" id="delCliNo">Não</button>`;
+      $("#delCliYes").onclick=()=>remove("clientes", id, "Cliente excluído");
+      $("#delCliNo").onclick=()=>{ cf.hidden=true; };
+    };
+  }
+}
+$("#panel").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closePanel(); });
+
+/* ---------- gravação ---------- */
+async function save(coll, id, body, okMsg){
+  if (!state.db){ toast("Sem conexão com os dados"); return; }
+  try{
+    if (id) await setDoc(doc(fs, coll, id), body);
+    else await addDoc(collection(fs, coll), body);
+    closePanel(); toast(okMsg);
+  }catch(e){ handleErr(e); }
+}
+async function remove(coll, id, okMsg){
+  try{ await deleteDoc(doc(fs, coll, id)); closePanel(); toast(okMsg); }catch(e){ handleErr(e); }
+}
+function handleErr(e){
+  if (e && e.code==="permission-denied") banner("Seu e-mail não está liberado para gravar. Fale com o Marcos.");
+  else if (e && e.code==="resource-exhausted") toast("Limite gratuito do dia atingido");
+  else toast("Não gravou. Tente de novo.");
+}
+
+/* ---------- eventos ---------- */
+function setTab(t){
+  state.tab=t; $("#tabDem").setAttribute("aria-selected",t==="dem"); $("#tabCli").setAttribute("aria-selected",t==="cli");
+  const on=!!auth.currentUser; $("#viewDem").hidden=!on||t!=="dem"; $("#viewCli").hidden=!on||t!=="cli";
+  try{ localStorage.setItem("tab",t); }catch(_){}
+  render();
+}
+$("#tabDem").onclick=()=>setTab("dem"); $("#tabCli").onclick=()=>setTab("cli");
+$("#btnNew").onclick=()=>editDem(null);
+$("#btnNewCli").onclick=()=>editCli(null);
+document.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{ state.st=b.dataset.st; document.querySelectorAll("[data-st]").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderDem(); });
+document.querySelectorAll("[data-resp]").forEach(b=>b.onclick=()=>{ state.resp=b.dataset.resp; document.querySelectorAll("[data-resp]").forEach(x=>x.setAttribute("aria-pressed",x===b)); try{localStorage.setItem("resp",state.resp);}catch(_){} renderDem(); });
+$("#q").addEventListener("input",e=>{ state.q=e.target.value; renderDem(); });
+$("#qc").addEventListener("input",e=>{ state.qc=e.target.value; renderCli(); });
+$("#demList").addEventListener("click",e=>{ const b=e.target.closest("[data-dem]"); if(b) editDem(b.dataset.dem); });
+$("#cliList").addEventListener("click",e=>{ const b=e.target.closest("[data-cli]"); if(b) editCli(b.dataset.cli); });
+
+try{ const r=localStorage.getItem("resp"); if(r!==null){ state.resp=r; document.querySelectorAll("[data-resp]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.resp===r)); } }catch(_){}
+try{ if(localStorage.getItem("tab")==="cli") setTab("cli"); }catch(_){}
+renderStats();
+
+/* ---------- dados ---------- */
+let unsubs = [];
+function showApp(on){
+  $("#viewLogin").hidden = on; $("#who").hidden = !on; $("#btnNew").hidden = !on;
+  document.querySelector(".tabs").hidden = !on;
+  $("#viewDem").hidden = !on || state.tab!=="dem"; $("#viewCli").hidden = !on || state.tab!=="cli";
+}
+function checkImport(){ $("#importBox").hidden = !(state.loaded.c && state.loaded.d && !state.clientes.length && !state.demandas.length); }
+
+$("#btnEntrar").onclick = async ()=>{
+  const p = new GoogleAuthProvider(); p.setCustomParameters({prompt:"select_account"});
+  try{ await signInWithPopup(auth, p); }
+  catch(e){ if (e.code==="auth/popup-blocked" || e.code==="auth/operation-not-supported-in-this-environment") signInWithRedirect(auth, p); else if (e.code!=="auth/popup-closed-by-user" && e.code!=="auth/cancelled-popup-request") toast("Não entrou: "+e.code); }
+};
+$("#btnSair").onclick = ()=>signOut(auth);
+
+onAuthStateChanged(auth, user=>{
+  unsubs.forEach(u=>u()); unsubs=[];
+  state.clientes=[]; state.demandas=[]; state.loaded={c:false,d:false};
+  if (!user){ showApp(false); banner(""); return; }
+  $("#whoMail").textContent = user.email; showApp(true); banner(""); render();
+  state.db = fs;
+  for (const [coll,key] of [["clientes","c"],["demandas","d"]]){
+    unsubs.push(onSnapshot(collection(fs, coll), snap=>{
+      state[coll]=snap.docs.map(d=>({id:d.id,...d.data()}));
+      state.loaded[key]=true; render(); checkImport();
+    }, e=>{
+      if (e.code==="permission-denied") banner("O e-mail "+user.email+" não está liberado. Peça ao Marcos para incluir, ou toque em Sair e entre com outra conta.");
+      else banner("A conexão com os dados caiu. Recarregue a página.");
+    }));
+  }
+});
+
+$("#importFile").addEventListener("change", async e=>{
+  const f = e.target.files[0]; if (!f) return;
+  try{
+    const data = JSON.parse(await f.text());
+    const b = writeBatch(fs);
+    for (const coll of ["clientes","demandas"]) for (const {id, ...body} of (data[coll]||[])) b.set(doc(fs, coll, id), body);
+    await b.commit();
+    toast(`Importados ${data.clientes.length} clientes e ${data.demandas.length} demandas`);
+  }catch(err){ toast("Arquivo inválido ou sem permissão"); console.error(err); }
+});
+</script>
+</body>
+</html>
