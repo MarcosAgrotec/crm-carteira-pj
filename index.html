@@ -125,6 +125,7 @@ textarea{min-height:84px;resize:vertical}
 .actions .spacer{flex:1}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--block)}
 .sub-h{font:600 13px var(--font-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:8px 0 0;display:flex;justify-content:space-between;align-items:center}
+.unsaved{position:sticky;top:-16px;z-index:2;background:var(--wait-soft);color:var(--wait);border:1px solid var(--wait);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
 @media (max-width:560px){
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -365,12 +366,35 @@ function renderDem(){
 function render(){ state.tab==="painel"?renderPainel():renderDem(); if(!$("#overlay").hidden && openCli) refreshCliPanel(); }
 
 /* ---------- painel lateral ---------- */
-let openCli = null;
-function openPanel(html){ $("#panel").innerHTML=html; $("#overlay").hidden=false; }
-function closePanel(){ $("#overlay").hidden=true; $("#panel").innerHTML=""; openCli=null; }
-$("#overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") closePanel(); });
-document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("#overlay").hidden) closePanel(); });
-$("#panel").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closePanel(); });
+let openCli = null, dirty = false;
+function openPanel(html){ $("#panel").innerHTML=html; $("#overlay").hidden=false; $("#panel").scrollTop=0; dirty=false; }
+function closePanel(){ $("#overlay").hidden=true; $("#panel").innerHTML=""; openCli=null; dirty=false; }
+// Sair do formulário com alteração não salva pede confirmação: salvar, descartar ou continuar
+function guard(next){
+  if (!dirty) return next();
+  let box=$("#unsaved");
+  if (!box){
+    box=document.createElement("div"); box.id="unsaved"; box.className="unsaved";
+    box.innerHTML=`<b>Você tem alterações não salvas.</b>
+      <div class="actions"><button class="btn sm" type="button" data-u="salvar">Salvar</button>
+      <button class="btn danger sm" type="button" data-u="descartar">Descartar</button>
+      <button class="btn ghost sm" type="button" data-u="voltar">Continuar editando</button></div>`;
+    $("#panel").prepend(box);
+  }
+  $("#panel").scrollTop=0;
+  box.onclick=e=>{
+    const u=e.target.closest("[data-u]")?.dataset.u; if(!u) return;
+    if (u==="voltar") box.remove();
+    if (u==="descartar"){ dirty=false; next(); }
+    if (u==="salvar"){ box.remove(); $("#panel form")?.requestSubmit(); }
+  };
+}
+$("#panel").addEventListener("input",e=>{ if(e.target.closest("form")) dirty=true; });
+$("#panel").addEventListener("change",e=>{ if(e.target.closest("form")) dirty=true; });
+window.addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+$("#overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") guard(closePanel); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("#overlay").hidden) guard(closePanel); });
+$("#panel").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) guard(closePanel); });
 
 const opts = (arr,val) => arr.map(v=>`<option value="${esc(v)}"${v===val?" selected":""}>${esc(v||"—")}</option>`).join("");
 const cliOpts = val => [...state.clientes].sort((a,b)=>a.nome.localeCompare(b.nome)).map(c=>`<option value="${esc(c.id)}"${c.id===val?" selected":""}>${esc(c.nome)}</option>`).join("");
@@ -406,7 +430,7 @@ function editDem(id, presetCli){
     </form>`);
   const back = () => voltarCli ? editCli(voltarCli) : closePanel();
   $("#fd_st").onchange = e => { $("#fd_agWrap").hidden = e.target.value!=="Aguardando"; };
-  $("#fd_cancel").onclick = back;
+  $("#fd_cancel").onclick = () => guard(back);
   $("#fDem").addEventListener("submit", async e=>{
     e.preventDefault();
     const body={clienteId:$("#fd_cli").value, tarefa:$("#fd_task").value.trim(), status:$("#fd_st").value,
@@ -476,7 +500,7 @@ function editCli(id){
     if (await save("clientes", id, body, "Cliente salvo")) closePanel();
   });
   if (id){
-    $("#cliAddDem").onclick=()=>editDem(null,id);
+    $("#cliAddDem").onclick=()=>guard(()=>editDem(null,id));
     $("#delCli").onclick=()=>{
       const cf=$("#confCli"); cf.hidden=false;
       const n=state.demandas.filter(d=>d.clienteId===id).length;
@@ -570,7 +594,11 @@ async function cardAct(e){
   const c=e.target.closest("[data-dem]"); if (c){ editDem(c.dataset.dem); return true; }
 }
 $("#demList").addEventListener("click",cardAct);
-$("#panel").addEventListener("click",e=>{ if (e.target.closest("#cliDems")) cardAct(e); });
+$("#panel").addEventListener("click",e=>{
+  if (!e.target.closest("#cliDems")) return;
+  if (dirty && !e.target.closest("[data-act]") && e.target.closest("[data-dem]")){ const id=e.target.closest("[data-dem]").dataset.dem; return guard(()=>editDem(id)); }
+  cardAct(e);
+});
 document.addEventListener("keydown",e=>{ const c=e.target.closest?.(".card"); if(c && e.target===c && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); editDem(c.dataset.dem); } });
 
 try{ const r=localStorage.getItem("resp"); if(r!==null){ state.resp=r; document.querySelectorAll("[data-resp]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.resp===r)); } }catch(_){}
