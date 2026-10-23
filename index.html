@@ -14,12 +14,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: cabeçalho fixo com abas, faixa de contagens, lista em fichas compactas; painel lateral/inferior para editar */
+/* Layout: cabeçalho fixo com abas; Painel = uma linha por cliente em ordem de prioridade; painel lateral/inferior para editar */
 :root{
   --bg:#f3f5f2; --surface:#ffffff; --fg:#1b241d; --muted:#5f6b62; --line:#dde3dc;
   --accent:#2f6b3f; --accent-soft:#e4efe6; --accent-fg:#ffffff;
   --run:#1f5fa8; --run-soft:#e3edf9; --todo:#6b5d1f; --todo-soft:#f4efd9;
-  --block:#a33a2b; --block-soft:#f8e4e0; --done:#5f6b62; --done-soft:#eceeeb;
+  --wait:#8a4a12; --wait-soft:#f8e9d8; --block:#a33a2b; --block-soft:#f8e4e0; --done:#5f6b62; --done-soft:#eceeeb;
   --font-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
   --font-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 }
@@ -27,18 +27,18 @@
   --bg:#121713; --surface:#1a211c; --fg:#e6ece6; --muted:#9aa79d; --line:#2c362f;
   --accent:#6fbf83; --accent-soft:#1f3326; --accent-fg:#0d1a10;
   --run:#7fb1ee; --run-soft:#1a2a3d; --todo:#d9c26a; --todo-soft:#2d2a17;
-  --block:#ef8f80; --block-soft:#3a1f1b; --done:#9aa79d; --done-soft:#232a25; color-scheme:dark}}
+  --wait:#f0b37a; --wait-soft:#35261a; --block:#ef8f80; --block-soft:#3a1f1b; --done:#9aa79d; --done-soft:#232a25; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121713; --surface:#1a211c; --fg:#e6ece6; --muted:#9aa79d; --line:#2c362f;
   --accent:#6fbf83; --accent-soft:#1f3326; --accent-fg:#0d1a10;
   --run:#7fb1ee; --run-soft:#1a2a3d; --todo:#d9c26a; --todo-soft:#2d2a17;
-  --block:#ef8f80; --block-soft:#3a1f1b; --done:#9aa79d; --done-soft:#232a25; color-scheme:dark}
+  --wait:#f0b37a; --wait-soft:#35261a; --block:#ef8f80; --block-soft:#3a1f1b; --done:#9aa79d; --done-soft:#232a25; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
-.wrap{max-width:880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:920px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
 .top{display:flex;align-items:center;gap:12px;padding-block:12px 0;flex-wrap:wrap}
 .brand{font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:.01em;margin:0;flex:1;min-width:0}
@@ -50,44 +50,71 @@ button{font-family:inherit}
 .btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer}
 .btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
 .btn.danger{background:transparent;color:var(--block);border:1px solid var(--block)}
-.btn:focus-visible,.tab:focus-visible,.chip:focus-visible,.card:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.sm{padding:6px 10px;font-size:13px}
+:is(.btn,.tab,.chip,.card,select,input,textarea,.arrow,.act):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 main{padding-block:16px 48px;display:flex;flex-direction:column;gap:14px}
+.view{display:flex;flex-direction:column;gap:12px}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left;color:var(--fg)}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;color:var(--fg)}
 .stat b{display:block;font:700 24px var(--font-display);font-variant-numeric:tabular-nums}
 .stat span{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 .stat.alert b{color:var(--block)}
 .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
-.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--fg);font-weight:600}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.chip .n{color:var(--muted);margin-left:4px}
 .search{flex:1 1 180px;min-width:0;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 10px;font-size:14px}
 .sep{width:1px;height:22px;background:var(--line)}
+.totals{font-size:13px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.totals b{color:var(--fg)}
 h2.group{font:600 13px var(--font-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 0;display:flex;gap:8px;align-items:center}
-h2.group .n{font-variant-numeric:tabular-nums}
 .list{display:flex;flex-direction:column;gap:8px}
+/* linha do cliente no painel */
+.row{background:var(--surface);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-columns:40px minmax(0,1fr);overflow:hidden}
+.row.hot{border-left:4px solid var(--block)}
+.prio{display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid var(--line);background:var(--bg)}
+.prio b{font:700 18px var(--font-display);font-variant-numeric:tabular-nums}
+.arrow{background:none;border:0;color:var(--muted);cursor:pointer;font-size:12px;line-height:1;padding:6px 10px}
+.arrow:disabled{opacity:.25;cursor:default}
+.rmain{padding:10px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;cursor:pointer;min-width:0}
+.rname{font-weight:700;font-size:15.5px;min-width:0;overflow-wrap:anywhere}
+.rinfo{font-size:12.5px;color:var(--muted);grid-column:1/-1;font-variant-numeric:tabular-nums}
+.rnext{grid-column:1/-1;font-size:14px;min-width:0;overflow-wrap:anywhere}
+.rnext .who{color:var(--muted)}
+.rnext.wait{color:var(--wait)}
+.rnext.none{color:var(--muted);font-style:italic}
+.flags{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.flag{font-size:11.5px;font-weight:600;border-radius:4px;padding:1px 6px;background:var(--block-soft);color:var(--block)}
+.flag.soft{background:var(--wait-soft);color:var(--wait)}
+.etapa{appearance:none;-webkit-appearance:none;border:0;border-radius:999px;padding:4px 12px;font:600 12px var(--font-body);cursor:pointer;align-self:start;max-width:46vw;text-overflow:ellipsis}
+.e0{background:var(--done-soft);color:var(--muted)} .e1{background:var(--todo-soft);color:var(--todo)} .e2{background:var(--run-soft);color:var(--run)}
+.e3{background:var(--accent-soft);color:var(--accent)} .e4{background:var(--wait-soft);color:var(--wait)} .e5{background:var(--accent);color:var(--accent-fg)}
+.e6{background:var(--done-soft);color:var(--done)} .e7{background:var(--block-soft);color:var(--block)}
+/* cartão de demanda */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;cursor:pointer;color:var(--fg);text-align:left;width:100%}
 .card .cli{font:600 13px var(--font-display);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .card .task{font-weight:600;min-width:0}
 .card .obs{color:var(--muted);font-size:14px;grid-column:1/-1;min-width:0;overflow-wrap:anywhere}
-.card .meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.card .meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;align-items:center}
 .meta .late{color:var(--block);font-weight:600}
 .meta .soon{color:var(--todo);font-weight:600}
 .meta .stale{color:var(--block)}
+.acts{display:flex;gap:6px;margin-left:auto}
+.act{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;padding:4px 9px;font-size:12.5px;cursor:pointer;font-weight:600}
 .pill{font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap;align-self:start}
 .s-run{background:var(--run-soft);color:var(--run)} .s-todo{background:var(--todo-soft);color:var(--todo)}
-.s-block{background:var(--block-soft);color:var(--block)} .s-done{background:var(--done-soft);color:var(--done)}
-.ccard{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 12px;align-items:center}
-.prio{font:700 20px var(--font-display);color:var(--muted);width:28px;text-align:center;font-variant-numeric:tabular-nums}
-.ccard .name{font-weight:600}
-.ccard .sub{font-size:13px;color:var(--muted);grid-column:2/3;min-width:0}
-.ccard .open{font:600 13px var(--font-display);text-align:right;color:var(--muted);grid-row:1/3;grid-column:3}
-.ccard .open b{display:block;font-size:20px;color:var(--fg)}
+.s-wait{background:var(--wait-soft);color:var(--wait)} .s-done{background:var(--done-soft);color:var(--done)}
 .note{font-size:13px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:10px 12px}
 .empty{text-align:center;color:var(--muted);padding:32px 12px;background:var(--surface);border:1px dashed var(--line);border-radius:10px}
 .banner{background:var(--block-soft);color:var(--block);border-radius:10px;padding:10px 12px;font-size:14px}
+.login{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.login h2{font:700 28px var(--font-display);margin:0}
+.login p{color:var(--muted);margin:0;max-width:34ch}
+.whoami{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);padding-block:0 4px;flex-wrap:wrap}
+.whoami button{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:2px 4px;font-size:12.5px}
 /* painel de edição */
 .overlay{position:fixed;inset:0;background:rgba(10,15,11,.45);z-index:20;display:flex;justify-content:flex-end}
-.panel{background:var(--surface);color:var(--fg);width:min(480px,100%);height:100%;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 18px;display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--surface);color:var(--fg);width:min(500px,100%);height:100%;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 18px;display:flex;flex-direction:column;gap:12px}
 .panel h3{font:700 20px var(--font-display);margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .x{background:none;border:0;font-size:26px;line-height:1;color:var(--muted);cursor:pointer;padding:4px 8px}
 label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
@@ -98,12 +125,7 @@ textarea{min-height:84px;resize:vertical}
 .actions .spacer{flex:1}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--block)}
 .sub-h{font:600 13px var(--font-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:8px 0 0;display:flex;justify-content:space-between;align-items:center}
-.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30}
-.login{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
-.login h2{font:700 28px var(--font-display);margin:0}
-.login p{color:var(--muted);margin:0;max-width:34ch}
-.who{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);padding-block:0 4px;flex-wrap:wrap}
-.who button{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:2px 4px;font-size:12.5px}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
 @media (max-width:560px){
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sep{display:none}
@@ -111,11 +133,10 @@ textarea{min-height:84px;resize:vertical}
   .panel{height:92%;border-radius:14px 14px 0 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:16px}
   .row2{grid-template-columns:1fr}
 }
-@media (prefers-reduced-motion:no-preference){.card,.stat,.chip{transition:border-color .15s,background .15s}.card:hover,.stat:hover{border-color:var(--accent)}}
+@media (prefers-reduced-motion:no-preference){.card,.row,.chip{transition:border-color .15s,background .15s}.card:hover,.rmain:hover{background:var(--bg)}}
 </style>
 </head>
 <body>
-
 <header>
   <div class="wrap">
     <div class="top">
@@ -123,10 +144,10 @@ textarea{min-height:84px;resize:vertical}
       <button class="btn" id="btnNew" type="button" hidden>+ Nova demanda</button>
     </div>
     <div class="tabs" role="tablist" hidden>
-      <button class="tab" role="tab" id="tabDem" aria-selected="true" type="button">Demandas</button>
-      <button class="tab" role="tab" id="tabCli" aria-selected="false" type="button">Clientes</button>
+      <button class="tab" role="tab" id="tabPainel" aria-selected="true" type="button">Painel</button>
+      <button class="tab" role="tab" id="tabDem" aria-selected="false" type="button">Demandas</button>
     </div>
-    <div class="who" id="who" hidden><span id="whoMail"></span><button type="button" id="btnSair">Sair</button></div>
+    <div class="whoami" id="who" hidden><span id="whoMail"></span><button type="button" id="btnSair">Sair</button></div>
   </div>
 </header>
 
@@ -134,11 +155,23 @@ textarea{min-height:84px;resize:vertical}
   <div id="banner" class="banner" hidden></div>
   <section id="viewLogin" class="login" hidden>
     <h2>Carteira PJ</h2>
-    <p>Entre com a sua conta Google para ver e atualizar as demandas.</p>
+    <p>Entre com a sua conta Google para ver e atualizar a carteira.</p>
     <button class="btn" id="btnEntrar" type="button">Entrar com Google</button>
   </section>
 
-  <section id="viewDem" class="list" style="gap:14px" hidden>
+  <section id="viewPainel" class="view" hidden>
+    <div class="filters" id="etapaChips"></div>
+    <div class="filters">
+      <input class="search" id="qc" type="search" placeholder="Buscar cliente, contato, banco ou gerente">
+      <button class="btn ghost" id="btnNewCli" type="button">+ Novo cliente</button>
+    </div>
+    <div class="totals" id="totals"></div>
+    <div class="note" id="importBox" hidden>Base vazia. Para trazer os dados da planilha, escolha o arquivo <b>importar-carteira-pj.json</b>:
+      <input type="file" id="importFile" accept=".json,application/json" style="display:block;margin-top:8px"></div>
+    <div id="cliList" class="list"><div class="empty">Carregando carteira…</div></div>
+  </section>
+
+  <section id="viewDem" class="view" hidden>
     <div class="stats" id="stats"></div>
     <div class="filters">
       <button class="chip" data-st="abertas" aria-pressed="true" type="button">Abertas</button>
@@ -152,153 +185,218 @@ textarea{min-height:84px;resize:vertical}
     </div>
     <div id="demList" class="list"><div class="empty">Carregando demandas…</div></div>
   </section>
-
-  <section id="viewCli" class="list" hidden>
-    <div class="filters">
-      <input class="search" id="qc" type="search" placeholder="Buscar cliente, contato ou gerente">
-      <button class="btn ghost" id="btnNewCli" type="button">+ Novo cliente</button>
-    </div>
-    <div class="note" id="importBox" hidden>Base vazia. Para trazer os dados da planilha, escolha o arquivo <b>importar-carteira-pj.json</b>:
-      <input type="file" id="importFile" accept=".json,application/json" style="display:block;margin-top:8px"></div>
-    <div id="cliList" class="list"><div class="empty">Carregando clientes…</div></div>
-  </section>
 </main>
 
 <div class="overlay" id="overlay" hidden>
   <div class="panel" id="panel" role="dialog" aria-modal="true"></div>
 </div>
 <div class="toast" id="toast" hidden></div>
+<datalist id="linhas"><option>FNO Empresarial</option><option>FNO Rural</option><option>Capital de giro</option><option>Investimento</option><option>Máquinas e equipamentos</option><option>Limite global</option></datalist>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, setDoc, addDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const fs = initializeFirestore(fbApp, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
-const STATUS = ["Não iniciada","Em execução","Bloqueada","Concluída"];
-const ST_CLASS = {"Não iniciada":"s-todo","Em execução":"s-run","Bloqueada":"s-block","Concluída":"s-done"};
-const GROUP_ORDER = ["Em execução","Não iniciada","Bloqueada","Concluída"];
+
+const ETAPAS = ["Prospecção","Documentação","Cadastro/limite","Projeto","Análise no banco","Contratado","Pausado","Perdido"];
+const ETAPA_CLS = e => ({"Prospecção":"e1","Documentação":"e1","Cadastro/limite":"e2","Projeto":"e3","Análise no banco":"e4","Contratado":"e5","Pausado":"e6","Perdido":"e7"}[e] || "e0");
+// Prévia local (localhost/?demo): dados de demo.json só na memória, nada vai ao Firestore
+const DEMO = location.hostname==="localhost" && new URLSearchParams(location.search).has("demo");
+const ATIVA = e => !["Contratado","Pausado","Perdido"].includes(e);
+const BANCOS = ["","BASA","Banco do Brasil","Bradesco","Sicredi","Sicoob","Cresol","Outro"];
+const STATUS = ["A fazer","Fazendo","Aguardando","Concluída"];
+const LEGADO = {"Não iniciada":"A fazer","Em execução":"Fazendo","Bloqueada":"Aguardando"};
+const ns = s => LEGADO[s] || (STATUS.includes(s) ? s : "A fazer");
+const ST_CLASS = {"A fazer":"s-todo","Fazendo":"s-run","Aguardando":"s-wait","Concluída":"s-done"};
 const RESP = ["Marcos Carrera","Anderson Nascimento","Ambos"];
-const state = {db:null, clientes:[], demandas:[], tab:"dem", st:"abertas", resp:"", q:"", qc:"", loaded:{c:false,d:false}, readonly:false};
+const curto = r => r==="Marcos Carrera"?"Marcos":r==="Anderson Nascimento"?"Anderson":(r||"sem responsável");
+const state = {clientes:[], demandas:[], tab:"painel", etapa:"ativas", st:"abertas", resp:"", q:"", qc:"", loaded:{c:false,d:false}};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const todayISO = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
-const fmt = iso => iso ? iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(2,4) : "";
+const addDays = (iso,n) => { const d=new Date((iso||todayISO())+"T12:00:00"); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const fmt = iso => iso ? iso.slice(8,10)+"/"+iso.slice(5,7) : "";
 const days = iso => Math.round((new Date(iso+"T00:00:00") - new Date(todayISO()+"T00:00:00"))/864e5);
 const cliById = id => state.clientes.find(c => c.id===id);
 const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const brl = v => (v||v===0) && !isNaN(v) ? new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",notation:"compact",maximumFractionDigits:1}).format(v) : "";
+// Aceita "2.500.000", "2.500.000,00", "2,5 mi", "2,5 milhões", "800 mil", "800k"
+function parseValor(s){
+  s=String(s||"").toLowerCase().replace(/r\$|\s/g,""); if(!s) return null;
+  let mult=1;
+  if (/(mi|milh[aã]o|milh[oõ]es|m)$/.test(s)){ mult=1e6; s=s.replace(/(mi|milh[aã]o|milh[oõ]es|m)$/,""); }
+  else if (/(mil|k)$/.test(s)){ mult=1e3; s=s.replace(/(mil|k)$/,""); }
+  if (s.includes(",")) s=s.replace(/\./g,"").replace(",",".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,"");
+  if (!/^\d+(\.\d+)?$/.test(s)) return null;
+  return Math.round(parseFloat(s)*mult*100)/100;
+}
 
-function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2200); }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2400); }
 function banner(msg){ const b=$("#banner"); b.textContent=msg; b.hidden=!msg; }
+
+/* ---------- regras do painel ---------- */
+const abertas = cid => state.demandas.filter(d=>d.clienteId===cid && ns(d.status)!=="Concluída");
+function rank(d){ const s=ns(d.status); if(d.prazo && days(d.prazo)<0) return 0; if(s==="Aguardando") return 4; if(d.prazo) return 1; return s==="Fazendo"?2:3; }
+function proximo(cid){
+  return abertas(cid).sort((a,b)=>rank(a)-rank(b)||(a.prazo||"9").localeCompare(b.prazo||"9")||(b.atualizado||"").localeCompare(a.atualizado||""))[0];
+}
+function ultimoToque(c){
+  return [c.atualizado, ...state.demandas.filter(d=>d.clienteId===c.id).map(d=>d.atualizado)].filter(Boolean).sort().pop() || "";
+}
+const ordenados = () => [...state.clientes].sort((a,b)=>(a.prioridade??99)-(b.prioridade??99)||a.nome.localeCompare(b.nome));
+
+/* ---------- render: painel ---------- */
+function renderChips(){
+  const cont = e => state.clientes.filter(c=>(c.etapa||"")===e).length;
+  const ativas = state.clientes.filter(c=>ATIVA(c.etapa||"")).length;
+  const chips = [["ativas","Em andamento",ativas], ...ETAPAS.map(e=>[e,e,cont(e)]), ["todas","Todas",state.clientes.length]];
+  const semEtapa = cont("");
+  if (semEtapa) chips.splice(1,0,["","Sem etapa",semEtapa]);
+  $("#etapaChips").innerHTML = chips.filter(([k,,n])=>n||k==="ativas"||k==="todas"||k===state.etapa)
+    .map(([k,l,n])=>`<button class="chip" type="button" data-etapa="${esc(k)}" aria-pressed="${k===state.etapa}">${esc(l)}<span class="n">${n}</span></button>`).join("");
+}
+function filtraEtapa(c){
+  const e=c.etapa||"";
+  if (state.etapa==="todas") return true;
+  if (state.etapa==="ativas") return ATIVA(e);
+  return e===state.etapa;
+}
+function cliRow(c, i, lista){
+  const nx = proximo(c.id);
+  const e = c.etapa||"";
+  const flags = [];
+  if (nx && nx.prazo && days(nx.prazo)<0) flags.push(`<span class="flag">Atrasado ${-days(nx.prazo)}d</span>`);
+  const ut = ultimoToque(c);
+  if (ATIVA(e) && ut && -days(ut)>30) flags.push(`<span class="flag soft">Parado há ${-days(ut)}d</span>`);
+  let next;
+  if (!nx) next = `<div class="rnext none">${ATIVA(e)?"Sem próximo passo definido":"Nenhuma demanda aberta"}</div>`;
+  else if (ns(nx.status)==="Aguardando") next = `<div class="rnext wait">⏳ Aguardando ${esc(nx.aguardando||"retorno")} · ${esc(nx.tarefa)}</div>`;
+  else next = `<div class="rnext">▸ ${esc(nx.tarefa)} <span class="who">· ${esc(curto(nx.responsavel))} · ${nx.prazo?"até "+fmt(nx.prazo):"sem data"}</span></div>`;
+  if (ATIVA(e) && !nx) flags.push(`<span class="flag">Sem próximo passo</span>`);
+  const info = [[c.banco,c.linha].filter(Boolean).join(" · "), brl(c.valor), c.gerente&&("Gerente: "+c.gerente)].filter(Boolean).map(esc).join("  ·  ");
+  const n = abertas(c.id).length;
+  return `<div class="row${flags.some(f=>!f.includes("soft"))&&ATIVA(e)?" hot":""}">
+    <div class="prio">
+      <button class="arrow" type="button" data-up="${esc(c.id)}" aria-label="Subir prioridade" ${i===0?"disabled":""}>▲</button>
+      <b>${c.prioridade??"–"}</b>
+      <button class="arrow" type="button" data-down="${esc(c.id)}" aria-label="Descer prioridade" ${i===lista.length-1?"disabled":""}>▼</button>
+    </div>
+    <div class="rmain" data-cli="${esc(c.id)}" tabindex="0" role="button">
+      <span class="rname">${esc(c.nome)}</span>
+      <select class="etapa ${ETAPA_CLS(e)}" data-etapa-de="${esc(c.id)}" aria-label="Etapa de ${esc(c.nome)}">
+        ${e?"":"<option value='' selected>Definir etapa</option>"}${ETAPAS.map(x=>`<option${x===e?" selected":""}>${x}</option>`).join("")}
+      </select>
+      ${info?`<div class="rinfo">${info}</div>`:""}
+      ${next}
+      <div class="flags">${flags.join("")}${n>1?`<span class="flag soft" style="background:var(--done-soft);color:var(--muted)">${n} abertas</span>`:""}</div>
+    </div>
+  </div>`;
+}
+function renderPainel(){
+  if (!state.loaded.c || !state.loaded.d) return;
+  renderChips();
+  const ativos = state.clientes.filter(c=>ATIVA(c.etapa||""));
+  const soma = l => l.reduce((s,c)=>s+(Number(c.valor)||0),0);
+  const contratado = state.clientes.filter(c=>c.etapa==="Contratado");
+  $("#totals").innerHTML = `<span>Em andamento: <b>${ativos.length}</b> clientes${soma(ativos)?" · <b>"+brl(soma(ativos))+"</b>":""}</span>${contratado.length?`<span>Contratado: <b>${brl(soma(contratado))||contratado.length}</b></span>`:""}`;
+  const el=$("#cliList");
+  if (!state.clientes.length){ el.innerHTML=`<div class="empty">Nenhum cliente ainda.<br>Toque em <b>+ Novo cliente</b>.</div>`; return; }
+  let lista = ordenados().filter(filtraEtapa);
+  if (state.qc){ const q=norm(state.qc); lista=lista.filter(c=>norm([c.nome,c.contato,c.gerente,c.municipio,c.cnpj,c.banco,c.linha].join(" ")).includes(q)); }
+  el.innerHTML = lista.length ? lista.map((c,i)=>cliRow(c,i,lista)).join("") : `<div class="empty">Nenhum cliente nesse filtro.</div>`;
+}
 
 /* ---------- render: demandas ---------- */
 function respMatch(d){ return !state.resp || d.responsavel===state.resp || d.responsavel==="Ambos"; }
 function renderStats(){
-  const open = state.demandas.filter(d=>d.status!=="Concluída" && respMatch(d));
+  const open = state.demandas.filter(d=>ns(d.status)!=="Concluída" && respMatch(d));
   const late = open.filter(d=>d.prazo && days(d.prazo)<0).length;
   const week = open.filter(d=>d.prazo && days(d.prazo)>=0 && days(d.prazo)<=7).length;
-  $("#stats").innerHTML = [
-    ["Em aberto", open.length, ""],
-    ["Em execução", open.filter(d=>d.status==="Em execução").length, ""],
-    ["Próx. 7 dias", week, ""],
-    ["Atrasadas", late, late?"alert":""]
-  ].map(([l,n,c])=>`<div class="stat ${c}"><b>${n}</b><span>${l}</span></div>`).join("");
+  $("#stats").innerHTML = [["Em aberto",open.length,""],["Próx. 7 dias",week,""],["Aguardando",open.filter(d=>ns(d.status)==="Aguardando").length,""],["Atrasadas",late,late?"alert":""]]
+    .map(([l,n,c])=>`<div class="stat ${c}"><b>${n}</b><span>${l}</span></div>`).join("");
 }
-function demCard(d){
-  const c = cliById(d.clienteId);
-  const meta = [];
-  meta.push(esc(d.responsavel||"Sem responsável"));
-  if (d.prazo && d.status!=="Concluída"){
+function demCard(d, mostraCli=true){
+  const c = cliById(d.clienteId), s = ns(d.status);
+  const meta = [esc(curto(d.responsavel))];
+  if (s==="Aguardando" && d.aguardando) meta.push(`Aguardando ${esc(d.aguardando)}`);
+  if (d.prazo && s!=="Concluída"){
     const n=days(d.prazo);
     meta.push(n<0?`<span class="late">Atrasada ${-n}d · ${fmt(d.prazo)}</span>`:n<=7?`<span class="soon">Prazo ${n===0?"hoje":"em "+n+"d"} · ${fmt(d.prazo)}</span>`:`Prazo ${fmt(d.prazo)}`);
-  } else if (d.prazo) meta.push(`Prazo ${fmt(d.prazo)}`);
-  if (d.atualizado){ const n=-days(d.atualizado); meta.push(`<span class="${n>30&&d.status!=="Concluída"?"stale":""}">Atualizada ${fmt(d.atualizado)}${n>0?" ("+n+"d)":""}</span>`); }
-  return `<button class="card" type="button" data-dem="${esc(d.id)}">
-    <div style="min-width:0"><div class="cli">${esc(c?c.nome:"Cliente removido")}</div><div class="task">${esc(d.tarefa||"(sem título)")}</div></div>
-    <span class="pill ${ST_CLASS[d.status]||"s-todo"}">${esc(d.status||"Não iniciada")}</span>
+  }
+  if (d.atualizado){ const n=-days(d.atualizado); meta.push(`<span class="${n>30&&s!=="Concluída"?"stale":""}">Atualizada ${fmt(d.atualizado)}${n>0?" ("+n+"d)":""}</span>`); }
+  const acts = s==="Concluída" ? "" : `<span class="acts"><button class="act" type="button" data-act="mais7" data-id="${esc(d.id)}" title="Adiar o prazo em 7 dias">+7 dias</button><button class="act" type="button" data-act="concluir" data-id="${esc(d.id)}">✓ Concluir</button></span>`;
+  return `<div class="card" role="button" tabindex="0" data-dem="${esc(d.id)}">
+    <div style="min-width:0">${mostraCli?`<div class="cli">${esc(c?c.nome:"Cliente removido")}</div>`:""}<div class="task">${esc(d.tarefa||"(sem título)")}</div></div>
+    <span class="pill ${ST_CLASS[s]}">${s}</span>
     ${d.obs?`<div class="obs">${esc(d.obs)}</div>`:""}
-    <div class="meta">${meta.join("<span aria-hidden='true'>·</span>")}</div>
-  </button>`;
+    <div class="meta">${meta.join("<span aria-hidden='true'>·</span>")}${acts}</div>
+  </div>`;
 }
 function sortDem(a,b){
   const pa=a.prazo||"9999", pb=b.prazo||"9999";
   if (pa!==pb) return pa<pb?-1:1;
-  const ca=cliById(a.clienteId)?.prioridade??99, cb=cliById(b.clienteId)?.prioridade??99;
-  return ca-cb;
+  return (cliById(a.clienteId)?.prioridade??99)-(cliById(b.clienteId)?.prioridade??99);
 }
 function renderDem(){
   renderStats();
+  if (!state.loaded.d || !state.loaded.c) return;
   const el=$("#demList");
-  if (!state.loaded.d){ return; }
   let list = state.demandas.filter(respMatch);
-  if (state.st==="abertas") list=list.filter(d=>d.status!=="Concluída");
-  if (state.st==="concluidas") list=list.filter(d=>d.status==="Concluída");
-  if (state.q){ const q=norm(state.q); list=list.filter(d=>norm([cliById(d.clienteId)?.nome,d.tarefa,d.obs].join(" ")).includes(q)); }
-  if (!state.demandas.length){ el.innerHTML=`<div class="empty">Nenhuma demanda ainda.<br>Toque em <b>+ Nova demanda</b> para lançar a primeira.</div>`; return; }
+  if (state.st==="abertas") list=list.filter(d=>ns(d.status)!=="Concluída");
+  if (state.st==="concluidas") list=list.filter(d=>ns(d.status)==="Concluída");
+  if (state.q){ const q=norm(state.q); list=list.filter(d=>norm([cliById(d.clienteId)?.nome,d.tarefa,d.obs,d.aguardando].join(" ")).includes(q)); }
+  if (!state.demandas.length){ el.innerHTML=`<div class="empty">Nenhuma demanda ainda.<br>Toque em <b>+ Nova demanda</b>.</div>`; return; }
   if (!list.length){ el.innerHTML=`<div class="empty">Nada com esses filtros.</div>`; return; }
-  const late = list.filter(d=>d.status!=="Concluída" && d.prazo && days(d.prazo)<0).sort(sortDem);
+  const late = list.filter(d=>ns(d.status)!=="Concluída" && d.prazo && days(d.prazo)<0).sort(sortDem);
   const rest = list.filter(d=>!late.includes(d));
-  let html="";
-  if (late.length) html+=`<h2 class="group" style="color:var(--block)">Atrasadas <span class="n">${late.length}</span></h2>`+late.map(demCard).join("");
-  for (const g of GROUP_ORDER){
-    const items=rest.filter(d=>(d.status||"Não iniciada")===g).sort(g==="Concluída"?(a,b)=>(b.atualizado||"").localeCompare(a.atualizado||""):sortDem);
-    if (items.length) html+=`<h2 class="group">${g} <span class="n">${items.length}</span></h2>`+items.map(demCard).join("");
+  let html = late.length ? `<h2 class="group" style="color:var(--block)">Atrasadas ${late.length}</h2>`+late.map(d=>demCard(d)).join("") : "";
+  for (const g of ["Fazendo","A fazer","Aguardando","Concluída"]){
+    const items=rest.filter(d=>ns(d.status)===g).sort(g==="Concluída"?(a,b)=>(b.atualizado||"").localeCompare(a.atualizado||""):sortDem);
+    if (items.length) html+=`<h2 class="group">${g} ${items.length}</h2>`+items.map(d=>demCard(d)).join("");
   }
   el.innerHTML=html;
 }
+function render(){ state.tab==="painel"?renderPainel():renderDem(); if(!$("#overlay").hidden && openCli) refreshCliPanel(); }
 
-/* ---------- render: clientes ---------- */
-function renderCli(){
-  const el=$("#cliList");
-  if (!state.loaded.c) return;
-  let list=[...state.clientes].sort((a,b)=>(a.prioridade??99)-(b.prioridade??99)||a.nome.localeCompare(b.nome));
-  if (state.qc){ const q=norm(state.qc); list=list.filter(c=>norm([c.nome,c.contato,c.gerente,c.municipio,c.cnpj].join(" ")).includes(q)); }
-  if (!state.clientes.length){ el.innerHTML=`<div class="empty">Nenhum cliente ainda.<br>Toque em <b>+ Novo cliente</b>.</div>`; return; }
-  if (!list.length){ el.innerHTML=`<div class="empty">Nenhum cliente encontrado.</div>`; return; }
-  el.innerHTML=list.map(c=>{
-    const ds=state.demandas.filter(d=>d.clienteId===c.id);
-    const open=ds.filter(d=>d.status!=="Concluída").length;
-    const sub=[c.contato,c.municipio,c.gerente&&("Gerente: "+c.gerente)].filter(Boolean).map(esc).join(" · ");
-    return `<button class="card ccard" type="button" data-cli="${esc(c.id)}">
-      <span class="prio" style="grid-row:1/3">${c.prioridade??"–"}</span>
-      <span class="name">${esc(c.nome)}</span>
-      <span class="open"><b>${open}</b>aberta${open===1?"":"s"}</span>
-      <span class="sub">${sub||"Sem contato cadastrado"}</span>
-    </button>`;
-  }).join("");
-}
-function render(){ state.tab==="dem"?renderDem():renderCli(); }
-
-/* ---------- painel ---------- */
-function openPanel(html){ $("#panel").innerHTML=html; $("#overlay").hidden=false; const f=$("#panel").querySelector("input,select,textarea"); if (f && window.innerWidth>560) f.focus(); }
-function closePanel(){ $("#overlay").hidden=true; $("#panel").innerHTML=""; }
+/* ---------- painel lateral ---------- */
+let openCli = null;
+function openPanel(html){ $("#panel").innerHTML=html; $("#overlay").hidden=false; }
+function closePanel(){ $("#overlay").hidden=true; $("#panel").innerHTML=""; openCli=null; }
 $("#overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") closePanel(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("#overlay").hidden) closePanel(); });
+$("#panel").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closePanel(); });
 
-function opts(arr,val){ return arr.map(v=>`<option${v===val?" selected":""}>${esc(v)}</option>`).join(""); }
-function cliOpts(val){ return [...state.clientes].sort((a,b)=>a.nome.localeCompare(b.nome)).map(c=>`<option value="${esc(c.id)}"${c.id===val?" selected":""}>${esc(c.nome)}</option>`).join(""); }
+const opts = (arr,val) => arr.map(v=>`<option value="${esc(v)}"${v===val?" selected":""}>${esc(v||"—")}</option>`).join("");
+const cliOpts = val => [...state.clientes].sort((a,b)=>a.nome.localeCompare(b.nome)).map(c=>`<option value="${esc(c.id)}"${c.id===val?" selected":""}>${esc(c.nome)}</option>`).join("");
 
 function editDem(id, presetCli){
-  const d = id ? state.demandas.find(x=>x.id===id) : {clienteId:presetCli||"", status:"Não iniciada", responsavel:"Marcos Carrera"};
+  const d = id ? state.demandas.find(x=>x.id===id) : {clienteId:presetCli||"", status:"A fazer", responsavel:"Marcos Carrera"};
   if (!d) return;
   if (!state.clientes.length){ toast("Cadastre um cliente primeiro"); return; }
+  const voltarCli = openCli;
+  openCli = null;
+  const s = ns(d.status);
   openPanel(`<h3>${id?"Editar demanda":"Nova demanda"}<button class="x" type="button" data-close aria-label="Fechar">×</button></h3>
     <form id="fDem" class="list" style="gap:12px">
       <label>Cliente<select id="fd_cli" required>${presetCli||id?"":"<option value=''>Escolha…</option>"}${cliOpts(d.clienteId)}</select></label>
       <label>Tarefa<input id="fd_task" required value="${esc(d.tarefa)}" placeholder="Ex.: Pedir laudo ABIMAQ"></label>
       <div class="row2">
-        <label>Status<select id="fd_st">${opts(STATUS,d.status)}</select></label>
+        <label>Status<select id="fd_st">${opts(STATUS,s)}</select></label>
         <label>Responsável<select id="fd_resp">${opts(RESP,d.responsavel)}</select></label>
       </div>
+      <label id="fd_agWrap" ${s==="Aguardando"?"":"hidden"}>Aguardando quem<input id="fd_ag" value="${esc(d.aguardando)}" placeholder="Ex.: Raíra (BASA), cliente, André"></label>
       <label>Prazo / próximo contato<input id="fd_prazo" type="date" value="${esc(d.prazo||"")}"></label>
       <label>Observações<textarea id="fd_obs" placeholder="O que foi feito, com quem falou, o que falta">${esc(d.obs)}</textarea></label>
-      ${d.atualizado?`<div class="note">Última atualização: ${fmt(d.atualizado)}</div>`:""}
+      ${d.atualizado?`<div class="note">Última atualização: ${fmt(d.atualizado)}/${d.atualizado.slice(0,4)}</div>`:""}
       <div class="actions">
         <button class="btn" type="submit">Salvar</button>
-        <button class="btn ghost" type="button" data-close>Cancelar</button>
+        <button class="btn ghost" type="button" id="fd_cancel">Cancelar</button>
         <span class="spacer"></span>
         ${id?`<button class="btn danger" type="button" id="delDem">Excluir</button>`:""}
       </div>
@@ -306,40 +404,58 @@ function editDem(id, presetCli){
         <button class="btn danger" type="button" id="delDemYes">Sim, excluir</button>
         <button class="btn ghost" type="button" id="delDemNo">Não</button></div>
     </form>`);
+  const back = () => voltarCli ? editCli(voltarCli) : closePanel();
+  $("#fd_st").onchange = e => { $("#fd_agWrap").hidden = e.target.value!=="Aguardando"; };
+  $("#fd_cancel").onclick = back;
   $("#fDem").addEventListener("submit", async e=>{
     e.preventDefault();
     const body={clienteId:$("#fd_cli").value, tarefa:$("#fd_task").value.trim(), status:$("#fd_st").value,
+      aguardando:$("#fd_st").value==="Aguardando"?$("#fd_ag").value.trim():"",
       responsavel:$("#fd_resp").value, prazo:$("#fd_prazo").value||"", obs:$("#fd_obs").value.trim(), atualizado:todayISO()};
     if (!body.clienteId){ toast("Escolha o cliente"); return; }
-    await save("demandas", id, body, "Demanda salva");
+    if (await save("demandas", id, body, "Demanda salva")) back();
   });
   if (id){
     $("#delDem").onclick=()=>{ $("#confDem").hidden=false; };
     $("#delDemNo").onclick=()=>{ $("#confDem").hidden=true; };
-    $("#delDemYes").onclick=()=>remove("demandas", id, "Demanda excluída");
+    $("#delDemYes").onclick=async()=>{ if (await remove("demandas", id, "Demanda excluída")) back(); };
   }
 }
 
+function cliDemsHtml(id){
+  const ds = state.demandas.filter(d=>d.clienteId===id).sort((a,b)=>(ns(a.status)==="Concluída")-(ns(b.status)==="Concluída")||rank(a)-rank(b)||sortDem(a,b));
+  return ds.length ? ds.map(d=>demCard(d,false)).join("") : `<div class="empty" style="padding:16px">Sem demandas.</div>`;
+}
+function refreshCliPanel(){ const box=$("#cliDems"); if (box) box.innerHTML=cliDemsHtml(openCli); }
+
 function editCli(id){
-  const c = id ? cliById(id) : {prioridade: (Math.max(0,...state.clientes.map(x=>x.prioridade||0))+1)};
+  const c = id ? cliById(id) : {prioridade:(Math.max(0,...state.clientes.map(x=>x.prioridade||0))+1), etapa:"Prospecção"};
   if (!c) return;
-  const ds = id ? state.demandas.filter(d=>d.clienteId===id).sort((a,b)=>(a.status==="Concluída")-(b.status==="Concluída")||sortDem(a,b)) : [];
+  openCli = id || null;
   openPanel(`<h3>${id?esc(c.nome):"Novo cliente"}<button class="x" type="button" data-close aria-label="Fechar">×</button></h3>
-    ${id?`<div class="sub-h">Demandas <button class="btn ghost" type="button" id="cliAddDem">+ Demanda</button></div>
-      <div class="list">${ds.length?ds.map(demCard).join(""):`<div class="empty" style="padding:16px">Sem demandas.</div>`}</div>
+    ${id?`<div class="sub-h">Demandas <button class="btn ghost sm" type="button" id="cliAddDem">+ Demanda</button></div>
+      <div class="list" id="cliDems">${cliDemsHtml(id)}</div>
       <div class="sub-h">Dados do cliente</div>`:""}
     <form id="fCli" class="list" style="gap:12px">
       <label>Nome<input id="fc_nome" required value="${esc(c.nome)}"></label>
       <div class="row2">
-        <label>CNPJ<input id="fc_cnpj" inputmode="numeric" value="${esc(c.cnpj)}" placeholder="00.000.000/0000-00"></label>
+        <label>Etapa<select id="fc_etapa">${opts(["",...ETAPAS],c.etapa||"")}</select></label>
         <label>Prioridade<input id="fc_prio" type="number" min="1" value="${esc(c.prioridade)}"></label>
       </div>
       <div class="row2">
-        <label>Proprietário / contato<input id="fc_cont" value="${esc(c.contato)}"></label>
+        <label>Banco<select id="fc_banco">${opts(BANCOS,c.banco||"")}</select></label>
+        <label>Linha<input id="fc_linha" list="linhas" value="${esc(c.linha)}" placeholder="Ex.: FNO Empresarial"></label>
+      </div>
+      <label>Valor pretendido (R$)<input id="fc_valor" inputmode="decimal" value="${c.valor?esc(Number(c.valor).toLocaleString("pt-BR")):""}" placeholder="Ex.: 2.500.000 ou 2,5 mi"></label>
+      <div class="row2">
+        <label>CNPJ<input id="fc_cnpj" inputmode="numeric" value="${esc(c.cnpj)}" placeholder="00.000.000/0000-00"></label>
         <label>Município/UF<input id="fc_mun" value="${esc(c.municipio)}"></label>
       </div>
-      <label>Gerente no banco<input id="fc_ger" value="${esc(c.gerente)}" placeholder="Nome - agência"></label>
-      <label>Limite, garantias e notas<textarea id="fc_notas" placeholder="Limite BASA (automático, global, investimento, máquinas), garantias exigidas, perfil do negócio">${esc(c.notas)}</textarea></label>
+      <div class="row2">
+        <label>Proprietário / contato<input id="fc_cont" value="${esc(c.contato)}"></label>
+        <label>Gerente no banco<input id="fc_ger" value="${esc(c.gerente)}" placeholder="Nome - agência"></label>
+      </div>
+      <label>Limite, garantias e notas<textarea id="fc_notas" placeholder="Limite aprovado, garantias exigidas, perfil do negócio">${esc(c.notas)}</textarea></label>
       <div class="actions">
         <button class="btn" type="submit">Salvar cliente</button>
         <button class="btn ghost" type="button" data-close>Fechar</button>
@@ -351,102 +467,160 @@ function editCli(id){
   $("#fCli").addEventListener("submit", async e=>{
     e.preventDefault();
     const p=parseInt($("#fc_prio").value,10);
-    const body={nome:$("#fc_nome").value.trim().toUpperCase(), cnpj:$("#fc_cnpj").value.trim(), prioridade:isNaN(p)?99:p,
-      contato:$("#fc_cont").value.trim(), municipio:$("#fc_mun").value.trim(), gerente:$("#fc_ger").value.trim(), notas:$("#fc_notas").value.trim()};
-    await save("clientes", id, body, "Cliente salvo");
+    const vtxt=$("#fc_valor").value.trim(), v=parseValor(vtxt);
+    if (vtxt && v===null){ toast("Valor não entendido. Use 2.500.000 ou 2,5 mi"); return; }
+    const body={nome:$("#fc_nome").value.trim().toUpperCase(), etapa:$("#fc_etapa").value, prioridade:isNaN(p)?99:p,
+      banco:$("#fc_banco").value, linha:$("#fc_linha").value.trim(), valor:v,
+      cnpj:$("#fc_cnpj").value.trim(), municipio:$("#fc_mun").value.trim(), contato:$("#fc_cont").value.trim(),
+      gerente:$("#fc_ger").value.trim(), notas:$("#fc_notas").value.trim(), atualizado:todayISO()};
+    if (await save("clientes", id, body, "Cliente salvo")) closePanel();
   });
   if (id){
     $("#cliAddDem").onclick=()=>editDem(null,id);
-    $("#panel").querySelectorAll("[data-dem]").forEach(b=>b.onclick=()=>editDem(b.dataset.dem));
     $("#delCli").onclick=()=>{
       const cf=$("#confCli"); cf.hidden=false;
-      if (ds.length){ cf.textContent=`Este cliente tem ${ds.length} demanda(s). Exclua as demandas antes.`; return; }
+      const n=state.demandas.filter(d=>d.clienteId===id).length;
+      if (n){ cf.textContent=`Este cliente tem ${n} demanda(s). Exclua as demandas antes, ou mude a etapa para Perdido.`; return; }
       cf.innerHTML=`Excluir o cliente de vez? <button class="btn danger" type="button" id="delCliYes">Sim, excluir</button><button class="btn ghost" type="button" id="delCliNo">Não</button>`;
-      $("#delCliYes").onclick=()=>remove("clientes", id, "Cliente excluído");
+      $("#delCliYes").onclick=async()=>{ if (await remove("clientes", id, "Cliente excluído")) closePanel(); };
       $("#delCliNo").onclick=()=>{ cf.hidden=true; };
     };
   }
 }
-$("#panel").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closePanel(); });
 
 /* ---------- gravação ---------- */
+function mem(coll, id, body, modo){
+  const arr=state[coll], i=arr.findIndex(x=>x.id===id);
+  if (modo==="del"){ if(i>=0) arr.splice(i,1); }
+  else if (modo==="patch"){ if(i>=0) arr[i]={...arr[i],...body}; }
+  else { const nid=id||("m"+Date.now()); if(i>=0) arr[i]={id:nid,...body}; else arr.push({id:nid,...body}); }
+  render(); return true;
+}
 async function save(coll, id, body, okMsg){
-  if (!state.db){ toast("Sem conexão com os dados"); return; }
+  if (DEMO){ toast(okMsg+" (prévia)"); return mem(coll,id,body,"set"); }
   try{
-    if (id) await setDoc(doc(fs, coll, id), body);
-    else await addDoc(collection(fs, coll), body);
-    closePanel(); toast(okMsg);
-  }catch(e){ handleErr(e); }
+    if (id) await setDoc(doc(fs, coll, id), body); else await addDoc(collection(fs, coll), body);
+    toast(okMsg); return true;
+  }catch(e){ handleErr(e); return false; }
+}
+async function patch(coll, id, body, okMsg){
+  if (DEMO){ if (okMsg) toast(okMsg+" (prévia)"); return mem(coll,id,body,"patch"); }
+  try{ await updateDoc(doc(fs, coll, id), body); if (okMsg) toast(okMsg); return true; }catch(e){ handleErr(e); return false; }
 }
 async function remove(coll, id, okMsg){
-  try{ await deleteDoc(doc(fs, coll, id)); closePanel(); toast(okMsg); }catch(e){ handleErr(e); }
+  if (DEMO){ toast(okMsg+" (prévia)"); return mem(coll,id,null,"del"); }
+  try{ await deleteDoc(doc(fs, coll, id)); toast(okMsg); return true; }catch(e){ handleErr(e); return false; }
 }
 function handleErr(e){
-  if (e && e.code==="permission-denied") banner("Seu e-mail não está liberado para gravar. Fale com o Marcos.");
+  console.error(e);
+  if (e && e.code==="permission-denied") banner("Este e-mail não tem permissão para gravar no CRM.");
   else if (e && e.code==="resource-exhausted") toast("Limite gratuito do dia atingido");
   else toast("Não gravou. Tente de novo.");
+}
+async function moverPrioridade(id, dir){
+  const lista = ordenados();
+  const visiveis = [...$("#cliList").querySelectorAll("[data-cli]")].map(el=>el.dataset.cli);
+  const pos = visiveis.indexOf(id), alvo = visiveis[pos+dir];
+  if (!alvo) return;
+  const a = lista.findIndex(c=>c.id===id), b = lista.findIndex(c=>c.id===alvo);
+  [lista[a], lista[b]] = [lista[b], lista[a]];
+  if (DEMO){ lista.forEach((c,i)=>{ c.prioridade=i+1; }); return render(); }
+  const batch = writeBatch(fs); let n=0;
+  lista.forEach((c,i)=>{ if (c.prioridade!==i+1){ batch.update(doc(fs,"clientes",c.id),{prioridade:i+1}); n++; } });
+  try{ if (n) await batch.commit(); }catch(e){ handleErr(e); }
 }
 
 /* ---------- eventos ---------- */
 function setTab(t){
-  state.tab=t; $("#tabDem").setAttribute("aria-selected",t==="dem"); $("#tabCli").setAttribute("aria-selected",t==="cli");
-  const on=!!auth.currentUser; $("#viewDem").hidden=!on||t!=="dem"; $("#viewCli").hidden=!on||t!=="cli";
+  state.tab=t; $("#tabPainel").setAttribute("aria-selected",t==="painel"); $("#tabDem").setAttribute("aria-selected",t==="dem");
+  const on=DEMO||!!auth.currentUser; $("#viewPainel").hidden=!on||t!=="painel"; $("#viewDem").hidden=!on||t!=="dem";
   try{ localStorage.setItem("tab",t); }catch(_){}
   render();
 }
-$("#tabDem").onclick=()=>setTab("dem"); $("#tabCli").onclick=()=>setTab("cli");
+$("#tabPainel").onclick=()=>setTab("painel"); $("#tabDem").onclick=()=>setTab("dem");
 $("#btnNew").onclick=()=>editDem(null);
 $("#btnNewCli").onclick=()=>editCli(null);
+$("#etapaChips").addEventListener("click",e=>{ const b=e.target.closest("[data-etapa]"); if(!b) return; state.etapa=b.dataset.etapa; renderPainel(); });
 document.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{ state.st=b.dataset.st; document.querySelectorAll("[data-st]").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderDem(); });
 document.querySelectorAll("[data-resp]").forEach(b=>b.onclick=()=>{ state.resp=b.dataset.resp; document.querySelectorAll("[data-resp]").forEach(x=>x.setAttribute("aria-pressed",x===b)); try{localStorage.setItem("resp",state.resp);}catch(_){} renderDem(); });
 $("#q").addEventListener("input",e=>{ state.q=e.target.value; renderDem(); });
-$("#qc").addEventListener("input",e=>{ state.qc=e.target.value; renderCli(); });
-$("#demList").addEventListener("click",e=>{ const b=e.target.closest("[data-dem]"); if(b) editDem(b.dataset.dem); });
-$("#cliList").addEventListener("click",e=>{ const b=e.target.closest("[data-cli]"); if(b) editCli(b.dataset.cli); });
+$("#qc").addEventListener("input",e=>{ state.qc=e.target.value; renderPainel(); });
+
+$("#cliList").addEventListener("click",e=>{
+  if (e.target.closest("select")) return;
+  const up=e.target.closest("[data-up]"), dn=e.target.closest("[data-down]");
+  if (up) return moverPrioridade(up.dataset.up,-1);
+  if (dn) return moverPrioridade(dn.dataset.down,1);
+  const r=e.target.closest("[data-cli]"); if (r) editCli(r.dataset.cli);
+});
+$("#cliList").addEventListener("keydown",e=>{ const r=e.target.closest(".rmain"); if(r && e.target===r && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); editCli(r.dataset.cli); } });
+$("#cliList").addEventListener("change",async e=>{
+  const s=e.target.closest("[data-etapa-de]"); if(!s) return;
+  await patch("clientes", s.dataset.etapaDe, {etapa:s.value, atualizado:todayISO()}, "Etapa: "+s.value);
+});
+async function cardAct(e){
+  const a=e.target.closest("[data-act]");
+  if (a){
+    e.stopPropagation();
+    const d=state.demandas.find(x=>x.id===a.dataset.id); if(!d) return;
+    if (a.dataset.act==="concluir") await patch("demandas", d.id, {status:"Concluída", atualizado:todayISO()}, "Concluída");
+    if (a.dataset.act==="mais7"){ const p=addDays(d.prazo && days(d.prazo)>=0 ? d.prazo : todayISO(), 7); await patch("demandas", d.id, {prazo:p, atualizado:todayISO()}, "Novo prazo: "+fmt(p)); }
+    return true;
+  }
+  const c=e.target.closest("[data-dem]"); if (c){ editDem(c.dataset.dem); return true; }
+}
+$("#demList").addEventListener("click",cardAct);
+$("#panel").addEventListener("click",e=>{ if (e.target.closest("#cliDems")) cardAct(e); });
+document.addEventListener("keydown",e=>{ const c=e.target.closest?.(".card"); if(c && e.target===c && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); editDem(c.dataset.dem); } });
 
 try{ const r=localStorage.getItem("resp"); if(r!==null){ state.resp=r; document.querySelectorAll("[data-resp]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.resp===r)); } }catch(_){}
-try{ if(localStorage.getItem("tab")==="cli") setTab("cli"); }catch(_){}
-renderStats();
+try{ if(localStorage.getItem("tab")==="dem") state.tab="dem"; }catch(_){}
 
-/* ---------- dados ---------- */
+/* ---------- login e dados ---------- */
 let unsubs = [];
 function showApp(on){
-  $("#viewLogin").hidden = on; $("#who").hidden = !on; $("#btnNew").hidden = !on;
-  document.querySelector(".tabs").hidden = !on;
-  $("#viewDem").hidden = !on || state.tab!=="dem"; $("#viewCli").hidden = !on || state.tab!=="cli";
+  $("#viewLogin").hidden=on; $("#who").hidden=!on; $("#btnNew").hidden=!on; document.querySelector(".tabs").hidden=!on;
+  setTab(state.tab);
 }
 function checkImport(){ $("#importBox").hidden = !(state.loaded.c && state.loaded.d && !state.clientes.length && !state.demandas.length); }
-
 $("#btnEntrar").onclick = async ()=>{
   const p = new GoogleAuthProvider(); p.setCustomParameters({prompt:"select_account"});
   try{ await signInWithPopup(auth, p); }
-  catch(e){ if (e.code==="auth/popup-blocked" || e.code==="auth/operation-not-supported-in-this-environment") signInWithRedirect(auth, p); else if (e.code!=="auth/popup-closed-by-user" && e.code!=="auth/cancelled-popup-request") toast("Não entrou: "+e.code); }
+  catch(e){ if (e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment") signInWithRedirect(auth,p); else if (e.code!=="auth/popup-closed-by-user"&&e.code!=="auth/cancelled-popup-request") toast("Não entrou: "+e.code); }
 };
 $("#btnSair").onclick = ()=>signOut(auth);
 
+if (DEMO){
+  fetch("demo.json").then(r=>r.json()).then(data=>{
+    state.clientes=data.clientes; state.demandas=data.demandas; state.loaded={c:true,d:true};
+    $("#whoMail").textContent="PRÉVIA LOCAL · nada é gravado"; showApp(true);
+  }).catch(()=>banner("Prévia: falta o arquivo demo.json na pasta do site."));
+}
 onAuthStateChanged(auth, user=>{
+  if (DEMO) return;
   unsubs.forEach(u=>u()); unsubs=[];
   state.clientes=[]; state.demandas=[]; state.loaded={c:false,d:false};
-  if (!user){ showApp(false); banner(""); return; }
-  $("#whoMail").textContent = user.email; showApp(true); banner(""); render();
-  state.db = fs;
+  banner("");
+  if (!user){ showApp(false); return; }
+  $("#whoMail").textContent=user.email; showApp(true);
   for (const [coll,key] of [["clientes","c"],["demandas","d"]]){
     unsubs.push(onSnapshot(collection(fs, coll), snap=>{
       state[coll]=snap.docs.map(d=>({id:d.id,...d.data()}));
       state.loaded[key]=true; render(); checkImport();
     }, e=>{
-      if (e.code==="permission-denied") banner("O e-mail "+user.email+" não está liberado. Peça ao Marcos para incluir, ou toque em Sair e entre com outra conta.");
+      $("#cliList").innerHTML=""; $("#demList").innerHTML="";
+      if (e.code==="permission-denied") banner(`A conta ${user.email} não tem acesso a este CRM. Toque em Sair e entre com a conta liberada.`);
       else banner("A conexão com os dados caiu. Recarregue a página.");
     }));
   }
 });
 
 $("#importFile").addEventListener("change", async e=>{
-  const f = e.target.files[0]; if (!f) return;
+  const f=e.target.files[0]; if(!f || DEMO) return;
   try{
-    const data = JSON.parse(await f.text());
-    const b = writeBatch(fs);
-    for (const coll of ["clientes","demandas"]) for (const {id, ...body} of (data[coll]||[])) b.set(doc(fs, coll, id), body);
+    const data=JSON.parse(await f.text());
+    const b=writeBatch(fs);
+    for (const coll of ["clientes","demandas"]) for (const {id,...body} of (data[coll]||[])) b.set(doc(fs,coll,id),body);
     await b.commit();
     toast(`Importados ${data.clientes.length} clientes e ${data.demandas.length} demandas`);
   }catch(err){ toast("Arquivo inválido ou sem permissão"); console.error(err); }
